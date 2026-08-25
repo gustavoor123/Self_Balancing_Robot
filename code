@@ -1,0 +1,335 @@
+% parameters
+mp=0.285; mw=0.025;
+Jp=0.001; Jw=0.0013;
+rw=0.022; l=0.1;
+c=0.0001;
+kt=0.3; kb=0.5; R=5;
+g=9.81;
+a = Jw/rw^2;
+b = (kt*kb)/(R*rw^2);
+d = (kt*kb)/(R*rw);
+
+% steady state space for the minseg model
+M = [mp+mw+a mp*l;
+mp*l Jp+mp*l^2];
+
+C = [(c/rw^2)+b -(c/rw)-d;
+-(c/rw)-d c+(kb*kt)/R];
+
+K = [0 0;
+0 -mp*g*l];
+
+F = [kt/(R*rw);
+-kt/R];
+
+Part 1.2
+% State-space matrices
+A = [zeros(2) eye(2);
+-M\K -M\C]
+
+B = [zeros(2,1);
+M\F]
+
+% Eigenvalues check
+eig(A)
+
+Part 1.3
+% Initial Matrix System (Angle = pi/60)
+q0 = [0; pi/60; 0; 0];
+C1 = eye(4);
+D1 = zeros(4,1);
+
+% State-space system
+sys = ss(A, B, C1, D1);
+
+% Simulations
+[t, y ] = deal([], []);
+[t1, y1] = deal([], []);
+[y, t ] = initial(sys, q0, 10);
+[y1, t1] = initial(sys, q0, 0.1);
+
+% Plot (10 s)
+figure
+plot(t, y)
+title('Open Loop Response (10 s)')
+xlabel('Time (s)')
+ylabel('Results')
+legend('x (m)','\theta (rad)','x dot (m/s)','\theta dot (rad/s)')
+grid on
+
+% Plot (0.1 s)
+figure
+plot(t1, y1)
+title('Open Loop Response (0.1 s)')
+xlabel('Time (s)')
+ylabel('Results')
+legend('x (m)','\theta (rad)','x dot (m/s)','\theta dot (rad/s)')
+grid on
+
+Part 2
+model = 'Project2_gustavo';
+open_system(model)
+
+load_system(model)
+saveas(get_param(model,'Handle'),'model_output.png')
+figure
+imshow('model_output.png')
+
+% For 10 degrees
+% Pole placement
+P = -8.7 * ones(1,4);
+K = acker(A, B, P);
+Acl = A - B*K;
+
+% Closed-loop system
+Bcl = zeros(size(B));
+Ccl = eye(size(A));
+Dcl = D1;
+sys = ss(Acl, Bcl, Ccl, Dcl);
+
+% Initial condition
+q0 = [0; 10*pi/180; 0; 0];
+[y, t, q] = initial(sys, q0);
+
+% Eigenvalues
+disp("Open Loop Eigenvalues: " + eig(A))
+disp("Ackerman Eigenvalues: " + eig(Acl))
+
+% State response
+figure
+plot(t, q)
+title('Closed Loop System (10 Degrees)')
+xlabel('Time (s)')
+ylabel('Results')
+legend('x (m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+
+% Control input
+u = -K * q';
+figure
+plot(t, u)
+title('Closed Loop: Control Input Voltage')
+xlabel('Time (s)')
+ylabel('Voltage')
+grid on
+disp("Max Voltage: " + max(abs(u)))
+
+% For 3 degrees
+% Pole placement
+P = -8.7 * ones(1,4);
+K = acker(A, B, P);
+Acl = A - B*K;
+
+% Closed-loop system
+Bcl = zeros(size(B));
+Ccl = eye(size(A));
+Dcl = D1;
+sys = ss(Acl, Bcl, Ccl, Dcl);
+
+% Initial condition: 3 degrees
+q0 = [0; 3*pi/180; 0; 0];
+[y, t, q] = initial(sys, q0);
+
+% Eigenvalues
+disp("Open Loop Eigenvalues: " + eig(A))
+disp("Ackerman Eigenvalues: " + eig(Acl))
+
+% State response
+figure
+plot(t, q)
+title('Closed Loop System (3 Degrees)')
+xlabel('Time (s)')
+ylabel('Results')
+legend('x (m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+
+% Control input
+u = -K * q';
+
+figure
+plot(t, u)
+title('Closed Loop: Control Input Voltage for 3 Degrees')
+xlabel('Time (s)')
+ylabel('Voltage')
+grid on
+
+disp("Max Voltage: " + max(abs(u)))
+
+% For 7 degrees
+% Pole placement
+P = -8.7 * ones(1,4);
+K = acker(A, B, P);
+Acl = A - B*K;
+
+% Closed-loop system
+Bcl = zeros(size(B));
+Ccl = eye(size(A));
+Dcl = D1;
+sys = ss(Acl, Bcl, Ccl, Dcl);
+
+% Initial condition: 7 degrees
+q0 = [0; 7*pi/180; 0; 0];
+[y, t, q] = initial(sys, q0);
+
+% Eigenvalues
+disp("Open Loop Eigenvalues: " + eig(A))
+disp("Ackerman Eigenvalues: " + eig(Acl))
+
+% State response
+figure
+plot(t, q)
+title('Closed Loop System (7 Degrees)')
+xlabel('Time (s)')
+ylabel('Results')
+
+  legend('x (m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+
+% Control input
+u = -K * q';
+
+figure
+plot(t, u)
+title('Closed Loop: Control Input Voltage for 7 Degrees')
+xlabel('Time (s)')
+ylabel('Voltage')
+grid on
+
+disp("Max Voltage: " + max(abs(u)))
+
+Part 3:
+% LQR setup (10 degrees)
+Q = diag([1 100 1 100]);
+R = 1;
+K = lqr(A, B, Q, R);
+Acl = A - B*K;
+disp("LQR Eigenvalues: " + eig(Acl))
+
+% Closed-loop system
+Bcl = zeros(size(B));
+Ccl = eye(size(A));
+Dcl = D1;
+sys = ss(Acl, Bcl, Ccl, Dcl);
+
+% Initial condition: 10 degrees
+q0 = [0; 10*pi/180; 0; 0];
+[y, t, q] = initial(sys, q0, 1);
+
+% State response
+figure
+plot(t, q)
+title('Response Using LQR (10 Degrees)')
+xlabel('Time (s)')
+ylabel('Results')
+legend('x (m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+
+% Control input voltage
+u = -K*q';
+figure
+plot(t, u)
+title('LQR: Control Input Voltage')
+xlabel('Time (s)')
+ylabel('Voltage')
+grid on
+
+% LQR setup (3 degrees)
+Q = diag([1 100 1 100]);
+R = 1;
+K = lqr(A, B, Q, R);
+Acl = A - B*K;
+disp("LQR Eigenvalues: " + eig(Acl))
+
+% Closed-loop system
+Bcl = zeros(size(B));
+Ccl = eye(size(A));
+Dcl = D1;
+sys = ss(Acl, Bcl, Ccl, Dcl);
+
+% Initial condition: 3 degrees
+q0 = [0; 3*pi/180; 0; 0];
+[y, t, q] = initial(sys, q0, 1);
+
+% State response
+figure
+plot(t, q)
+title('Response Using LQR (3 Degrees)')
+xlabel('Time (s)')
+ylabel('Results')
+
+  legend('x (m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+
+% Control input voltage
+u = -K*q';
+
+figure
+plot(t, u)
+title('LQR: Control Input Voltage for 3 Degrees')
+xlabel('Time (s)')
+ylabel('Voltage')
+grid on
+
+% LQR setup (7 degrees)
+Q = diag([1 100 1 100]);
+R = 1;
+K = lqr(A, B, Q, R);
+Acl = A - B*K;
+disp("LQR Eigenvalues: " + eig(Acl))
+
+% Closed-loop system
+Bcl = zeros(size(B));
+Ccl = eye(size(A));
+Dcl = D1;
+sys = ss(Acl, Bcl, Ccl, Dcl);
+
+% Initial condition: 7 degrees
+q0 = [0; 7*pi/180; 0; 0];
+[y, t, q] = initial(sys, q0, 1);
+
+% State response
+figure
+plot(t, q)
+title('Response Using LQR (7 Degrees)')
+xlabel('Time (s)')
+ylabel('Results')
+legend('x (m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+
+% Control input voltage
+u = -K*q';
+
+figure
+plot(t, u)
+title('LQR: Control Input Voltage for 7 Degrees')
+xlabel('Time (s)')
+ylabel('Voltage')
+grid on
+
+Part 4
+Q = [10 0 0 0;
+0 5000 0 0;
+0 0 10 0;
+0 0 0 50];
+
+R = 1;
+K_lqr = lqr(A, B, Q, R);
+eig(A - B*K_lqr)
+
+figure;
+plot(t, q)
+title('Robot Output Response')
+xlabel('Time (s)')
+ylabel('Results of Robot')
+legend('x(m)', '\theta (rad)', 'x dot (m/s)', '\theta dot (rad/s)')
+grid on
+grid minor
+u = -K_lqr*q';
+
+figure;
+plot(t, u)
+title('Robot Voltage Input')
+xlabel('Time (s)')
+ylabel('Voltage (V)')
+grid on
+grid minor
